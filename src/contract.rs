@@ -184,7 +184,7 @@ fn execute_create_campaign(
             distributed_amount: Uint128::zero(),
         },
     )?;
-    LAST_CAMPAIGN_ID.save(deps.storage, &last_id)?;
+    LAST_CAMPAIGN_ID.save(deps.storage, &id)?;
 
     Ok(Response::new().add_attributes(vec![
         ("action", "create_campaign"),

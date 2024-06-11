@@ -19,7 +19,7 @@ macro_rules! create_entry_points_testing {
 }
 
 pub struct MockApp {
-    app: App,
+    pub app: App,
     token_map: HashMap<String, Addr>, // map token name to address
     pub token_id: u64,
 }
