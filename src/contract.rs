@@ -11,7 +11,9 @@ use crate::cash_back::{execute_cash_back, execute_trigger_cash_back};
 use crate::error::ContractError;
 use crate::helpers::validate_cash_back_rule;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Campaign, Config, CAMPAIGN, CONFIG, LAST_CAMPAIGN_ID, WHITELIST_CONTRACT};
+use crate::state::{
+    Campaign, Config, CAMPAIGN, CONFIG, LAST_CAMPAIGN_ID, PENDING_CASH_BACK, WHITELIST_CONTRACT,
+};
 
 /*
 // version info for migration info
@@ -228,6 +230,8 @@ fn execute_edit_campaign(
         return Err(ContractError::InvalidCampaignTime {});
     }
 
+    CAMPAIGN.save(deps.storage, id, &campaign)?;
+
     Ok(Response::new().add_attributes(vec![
         ("action", "edit_campaign"),
         ("campaign_id", &id.to_string()),
@@ -241,6 +245,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Campaign { id } => to_json_binary(&CAMPAIGN.load(deps.storage, id)?),
         QueryMsg::LastCampaign {} => to_json_binary(&query_last_campaign(deps)?),
         QueryMsg::LastCampaignId {} => to_json_binary(&LAST_CAMPAIGN_ID.load(deps.storage)?),
+        QueryMsg::WhitelistContract {} => {
+            to_json_binary(&WHITELIST_CONTRACT.query_hooks(deps)?.hooks)
+        }
+        QueryMsg::PendingCashBack { user } => to_json_binary(
+            &PENDING_CASH_BACK
+                .load(deps.storage, &user)
+                .unwrap_or_default(),
+        ),
     }
 }
 

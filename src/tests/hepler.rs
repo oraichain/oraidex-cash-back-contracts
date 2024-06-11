@@ -151,4 +151,80 @@ impl MockApp {
             "cash-back-contract",
         )
     }
+
+    pub fn set_balances_from(
+        &mut self,
+        sender: Addr,
+        balances: &[(&String, &[(&String, &Uint128)])],
+    ) {
+        for (denom, balances) in balances.iter() {
+            // send for each recipient
+            for (recipient, &amount) in balances.iter() {
+                self.app
+                    .send_tokens(
+                        sender.clone(),
+                        Addr::unchecked(recipient.as_str()),
+                        &[Coin {
+                            denom: denom.to_string(),
+                            amount,
+                        }],
+                    )
+                    .unwrap();
+            }
+        }
+    }
+
+    pub fn mint_token(
+        &mut self,
+        sender: &str,
+        recipient: &str,
+        cw20_addr: &str,
+        amount: u128,
+    ) -> Result<AppResponse, String> {
+        self.execute(
+            Addr::unchecked(sender),
+            Addr::unchecked(cw20_addr),
+            &cw20::Cw20ExecuteMsg::Mint {
+                recipient: recipient.to_string(),
+                amount: amount.into(),
+            },
+            &[],
+        )
+    }
+
+    pub fn set_token_balances_from(
+        &mut self,
+        sender: &str,
+        balances: &[(&str, &[(&str, u128)])],
+    ) -> Result<Vec<Addr>, String> {
+        let mut contract_addrs = vec![];
+        for (token, balances) in balances {
+            let contract_addr = match self.token_map.get(*token) {
+                None => self.create_token(sender, token, 0),
+                Some(addr) => addr.clone(),
+            };
+            contract_addrs.push(contract_addr.clone());
+
+            // mint for each recipient
+            for (recipient, amount) in balances.iter() {
+                if *amount != 0 {
+                    self.mint_token(sender, recipient, contract_addr.as_str(), *amount)?;
+                }
+            }
+        }
+        Ok(contract_addrs)
+    }
+
+    pub fn set_balances(&mut self, owner: &str, balances: &[(&String, &[(&String, &Uint128)])]) {
+        self.set_balances_from(Addr::unchecked(owner), balances)
+    }
+
+    // configure the mint whitelist mock querier
+    pub fn set_token_balances(
+        &mut self,
+        owner: &str,
+        balances: &[(&str, &[(&str, u128)])],
+    ) -> Result<Vec<Addr>, String> {
+        self.set_token_balances_from(owner, balances)
+    }
 }

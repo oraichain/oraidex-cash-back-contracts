@@ -60,4 +60,8 @@ pub enum QueryMsg {
     LastCampaign {},
     #[returns(u64)]
     LastCampaignId {},
+    #[returns(Vec<String>)]
+    WhitelistContract {},
+    #[returns(Uint128)]
+    PendingCashBack { user: Addr },
 }
